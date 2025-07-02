@@ -28,13 +28,14 @@ A modular, interactive analytics platform for **exploring, cleaning, and visuali
 
 ### 2. Data Preview Table
 
-(![data preview](https://github.com/user-attachments/assets/cc15208c-153c-4f1e-91f1-8e63d3a1268f)
+![data preview](https://github.com/user-attachments/assets/cc15208c-153c-4f1e-91f1-8e63d3a1268f)
 
 ---
 
 ### 3. Recommended Charts Chatbot
 
-![Recommended Charts Chatbot](chatbot.jpg)[3]
+![chatbot](https://github.com/user-attachments/assets/e3a991d1-7d85-4f56-b728-1a5fee40abba)
+
 
 ---
 
