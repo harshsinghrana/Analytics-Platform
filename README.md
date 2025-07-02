@@ -28,7 +28,7 @@ A modular, interactive analytics platform for **exploring, cleaning, and visuali
 
 ### 2. Data Preview Table
 
-![Data Preview Table](data-preview.jpg)[2]
+(![data preview](https://github.com/user-attachments/assets/cc15208c-153c-4f1e-91f1-8e63d3a1268f)
 
 ---
 
