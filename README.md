@@ -21,8 +21,8 @@ A modular, interactive analytics platform for **exploring, cleaning, and visuali
 
 ### 1. Missing Value Handling UI
 
-![Missing Value Handling](![filling missing value](https://github.com/user-attachments/assets/d8c6324e-96a5-449c-9318-1e3ab152c2a7)
-)[1]
+![Missing Value Handling](https://github.com/user-attachments/assets/d8c6324e-96a5-449c-9318-1e3ab152c2a7)
+
 
 ---
 
