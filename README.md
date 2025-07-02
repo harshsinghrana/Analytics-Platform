@@ -21,22 +21,20 @@ A modular, interactive analytics platform for **exploring, cleaning, and visuali
 
 ### 1. Missing Value Handling UI
 
-(https://github.com/user-attachments/assets/d2fc5b98-c70f-45b6-b695-b076c2287366)
-
+![Missing Value Handling](![filling missing value](https://github.com/user-attachments/assets/d8c6324e-96a5-449c-9318-1e3ab152c2a7)
+)[1]
 
 ---
 
 ### 2. Data Preview Table
 
-[data preview](https://github.com/user-attachments/assets/ea3dc5f8-43a0-49fe-90d6-2eb53672b75c)
-
+![Data Preview Table](data-preview.jpg)[2]
 
 ---
 
 ### 3. Recommended Charts Chatbot
 
-![Recommended Charts Chatbot](chatbot.jpg)[3]![chatbot](https://github.com/user-attachments/assets/09e8f215-86e0-490a-ab00-0f2de9471bea)
-
+![Recommended Charts Chatbot](chatbot.jpg)[3]
 
 ---
 
