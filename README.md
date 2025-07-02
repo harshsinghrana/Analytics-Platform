@@ -72,7 +72,6 @@ The platform automatically suggests the following charts based on your restauran
 ### Prerequisites
 
 - Python 3.8+
-- Install dependencies from `requirements.txt`
 
 ### Installation
 
