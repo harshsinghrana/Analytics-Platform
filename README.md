@@ -21,7 +21,8 @@ A modular, interactive analytics platform for **exploring, cleaning, and visuali
 
 ### 1. Missing Value Handling UI
 
-![Missing Value Handling](filling-missing-value.jpg)[1]
+![Missing Value Handling](filling-missi![filling missing value](https://github.com/user-attachments/assets/d2fc5b98-c70f-45b6-b695-b076c2287366)
+ng-value.jpg)[1]
 
 ---
 
