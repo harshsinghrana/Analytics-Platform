@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from utils.visualization import Visualization
+from .visualization import Visualization
 
 class DashboardBuilder:
     """Handles dashboard creation and management"""
