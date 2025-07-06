@@ -1,6 +1,3 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 import streamlit as st
 import pandas as pd
 from utils.data_processor import DataProcessor
@@ -23,6 +20,12 @@ if 'dashboard_config' not in st.session_state:
     st.session_state.dashboard_config = []
 if 'chat_history' not in st.session_state:
     st.session_state.chat_history = []
+if 'user_openai_key' not in st.session_state:
+    st.session_state.user_openai_key = ""
+if 'user_gemini_key' not in st.session_state:
+    st.session_state.user_gemini_key = ""
+if 'api_keys_configured' not in st.session_state:
+    st.session_state.api_keys_configured = False
 
 # Initialize components
 data_processor = DataProcessor()
@@ -30,7 +33,53 @@ dashboard_builder = DashboardBuilder()
 chatbot = DataChatbot()
 report_generator = ReportGenerator()
 
-# Main title
+# Check if API keys are configured, if not show setup screen
+import os
+
+def has_api_keys():
+    """Check if Gemini API keys are available from environment or user input"""
+    env_gemini = os.getenv("GEMINI_API_KEY", "")
+    user_gemini = st.session_state.get('user_gemini_key', '')
+    
+    return bool(env_gemini or user_gemini)
+
+# Show API setup screen if no keys are configured
+if not has_api_keys() and not st.session_state.api_keys_configured:
+    st.title("🔑 Gemini API Key Setup")
+    st.markdown("To use the AI Data Chat features, please provide your Gemini API key:")
+    
+    st.subheader("🔮 Gemini API Key")
+    st.markdown("For Google AI-powered data analysis and chat")
+    gemini_key = st.text_input(
+        "Enter Gemini API Key:",
+        type="password", 
+        placeholder="AI...",
+        help="Get your API key from https://makersuite.google.com/app/apikey"
+    )
+    
+    if gemini_key:
+        st.session_state.user_gemini_key = gemini_key
+    
+    st.markdown("---")
+    st.info("💡 You can also skip this step and set GEMINI_API_KEY as an environment variable")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("🚀 Continue with Gemini", disabled=not gemini_key):
+            st.session_state.api_keys_configured = True
+            st.success("✅ Gemini API key configured! Refreshing app...")
+            st.rerun()
+    
+    with col2:
+        if st.button("⏭️ Skip (No AI Features)"):
+            st.session_state.api_keys_configured = True
+            st.warning("⚠️ AI features will be disabled without API keys")
+            st.rerun()
+    
+    st.stop()
+
+# Main app interface
 st.title("📊 Analytics Platform")
 st.markdown("Build custom dashboards and chat with your data using AI")
 
@@ -350,7 +399,7 @@ if page == "Data Upload":
 
 # Data Cleaning Page
 elif page == "Data Cleaning":
-    st.header("🧹 Data Cleaning & Excel-like Operations")
+    st.header("🧹 Data Cleaning ")
     
     if st.session_state.data is None:
         st.warning("⚠️ Please upload data first in the Data Upload page.")
@@ -362,11 +411,12 @@ elif page == "Data Cleaning":
             st.session_state.cleaned_data = data.copy()
         
         # Tabs for different operations
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tab1, tab2, tab3, tab4, tab5 = st.tabs([
             "🔍 Missing Values", 
             "➕ Add Column", 
             "🗑️ Drop Columns", 
-            "💾 Export Data"
+            "💾 Export Data",
+            "⚙️ AI Settings"
         ])
         
         with tab1:
@@ -485,7 +535,7 @@ elif page == "Data Cleaning":
                 st.rerun()
         
         with tab2:
-            st.subheader("Add Calculated Column (Excel-like Formulas)")
+            st.subheader("Add New Calculated Column ")
             
             col1, col2 = st.columns([1, 1])
             
@@ -588,6 +638,118 @@ elif page == "Data Cleaning":
                     st.session_state.data = st.session_state.cleaned_data.copy()
                     st.success("✅ Main dataset updated with cleaned data!")
                     st.info("You can now use the cleaned data in Dashboard Builder and AI Chat.")
+        
+        with tab5:
+            st.subheader("🤖 AI Settings")
+            st.write("Configure your AI API keys to enable enhanced features like intelligent data analysis and smart insights.")
+            
+            # Check for existing environment variables
+            import os
+            env_openai = os.getenv('OPENAI_API_KEY', '')
+            env_gemini = os.getenv('GEMINI_API_KEY', '')
+            
+            # OpenAI Configuration
+            st.write("**OpenAI Configuration:**")
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                if env_openai:
+                    st.info("🔑 OpenAI API key is already set in environment variables.")
+                    st.write("Current status: ✅ Available")
+                else:
+                    openai_key = st.text_input(
+                        "OpenAI API Key:",
+                        value=st.session_state.user_openai_key,
+                        type="password",
+                        help="Enter your OpenAI API key to enable GPT-powered features",
+                        placeholder="sk-..."
+                    )
+                    
+                    if openai_key != st.session_state.user_openai_key:
+                        st.session_state.user_openai_key = openai_key
+                    
+                    if st.session_state.user_openai_key:
+                        st.success("✅ OpenAI key configured (session only)")
+                    else:
+                        st.warning("⚠️ No OpenAI key provided")
+            
+            with col2:
+                if st.button("Test OpenAI"):
+                    try:
+                        import openai
+                        api_key = env_openai or st.session_state.user_openai_key
+                        if api_key:
+                            # Test with a simple API call
+                            client = openai.OpenAI(api_key=api_key)
+                            response = client.models.list()
+                            st.success("✅ OpenAI connection successful!")
+                        else:
+                            st.error("❌ No API key provided")
+                    except Exception as e:
+                        st.error(f"❌ OpenAI test failed: {str(e)}")
+            
+            st.markdown("---")
+            
+            # Gemini Configuration
+            st.write("**Google Gemini Configuration:**")
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                if env_gemini:
+                    st.info("🔑 Gemini API key is already set in environment variables.")
+                    st.write("Current status: ✅ Available")
+                else:
+                    gemini_key = st.text_input(
+                        "Gemini API Key:",
+                        value=st.session_state.user_gemini_key,
+                        type="password",
+                        help="Enter your Google Gemini API key to enable Gemini-powered features",
+                        placeholder="AI..."
+                    )
+                    
+                    if gemini_key != st.session_state.user_gemini_key:
+                        st.session_state.user_gemini_key = gemini_key
+                    
+                    if st.session_state.user_gemini_key:
+                        st.success("✅ Gemini key configured (session only)")
+                    else:
+                        st.warning("⚠️ No Gemini key provided")
+            
+            with col2:
+                if st.button("Test Gemini"):
+                    try:
+                        from google import genai
+                        api_key = env_gemini or st.session_state.user_gemini_key
+                        if api_key:
+                            # Test with a simple API call
+                            client = genai.Client(api_key=api_key)
+                            response = client.models.list()
+                            st.success("✅ Gemini connection successful!")
+                        else:
+                            st.error("❌ No API key provided")
+                    except Exception as e:
+                        st.error(f"❌ Gemini test failed: {str(e)}")
+            
+            st.markdown("---")
+            
+            # AI Features Information
+            st.write("**🚀 AI-Powered Features:**")
+            st.info("""
+            **With API keys configured, you can access:**
+            - 🤖 **AI Data Chat**: Ask questions about your data in natural language
+            - 📊 **Smart Insights**: Get automated analysis and recommendations
+            - 🔍 **Intelligent Data Cleaning**: AI-suggested cleaning operations
+            - 📈 **Auto-Generated Reports**: AI-powered report generation
+            """)
+            
+            # Security Notice
+            st.warning("""
+            **🔒 Security Notice:**
+            - API keys entered here are stored in session only (temporary)
+            - Keys are not saved permanently or shared
+            - For production use, set keys as environment variables
+            - Never share your API keys with others
+            """)
 
 # Dashboard Builder Page
 elif page == "Dashboard Builder":
