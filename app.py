@@ -102,11 +102,43 @@ if page == "Data Upload":
     
     if uploaded_file is not None:
         try:
-            # Process the uploaded file
-            data = data_processor.load_file(uploaded_file)
+            # Check if it's an Excel file with multiple sheets
+            file_extension = uploaded_file.name.split('.')[-1].lower()
+            
+            if file_extension in ['xlsx', 'xls']:
+                # Show Excel file information
+                excel_file = pd.ExcelFile(uploaded_file)
+                sheet_names = excel_file.sheet_names
+                
+                if len(sheet_names) > 1:
+                    st.info(f"📊 Excel file contains {len(sheet_names)} sheets: {', '.join(sheet_names)}")
+                    selected_sheet = st.selectbox(
+                        "Select sheet to load:",
+                        sheet_names,
+                        index=0,
+                        help="Choose which sheet to load from your Excel file"
+                    )
+                    
+                    # Load selected sheet
+                    uploaded_file.seek(0)
+                    data = pd.read_excel(uploaded_file, sheet_name=selected_sheet)
+                else:
+                    # Single sheet Excel file
+                    data = pd.read_excel(uploaded_file)
+                    
+                # Clean the data
+                data = data_processor._clean_data(data)
+            else:
+                # Process CSV file
+                data = data_processor.load_file(uploaded_file)
+            
             st.session_state.data = data
             
-            st.success(f"✅ File uploaded successfully! Shape: {data.shape}")
+            # Show success message with file info
+            file_info = f"✅ File uploaded successfully! Shape: {data.shape}"
+            if file_extension in ['xlsx', 'xls'] and len(sheet_names) > 1:
+                file_info += f" (Sheet: {selected_sheet if 'selected_sheet' in locals() else sheet_names[0]})"
+            st.success(file_info)
             
             # Display data preview
             st.subheader("Data Preview")
@@ -231,21 +263,49 @@ if page == "Data Upload":
                             from io import BytesIO
                             from datetime import datetime
                             
-                            # Convert data to CSV for download (Excel export is complex)
+                            # Create Excel file with proper formatting
+                            excel_buffer = BytesIO()
+                            
+                            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                                # Write data to Excel
+                                data.to_excel(writer, sheet_name='Data', index=False)
+                                
+                                # Add a summary sheet
+                                summary_df = pd.DataFrame({
+                                    'Metric': ['Total Rows', 'Total Columns', 'Missing Values', 'Export Date'],
+                                    'Value': [
+                                        data.shape[0],
+                                        data.shape[1], 
+                                        data.isnull().sum().sum(),
+                                        datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                    ]
+                                })
+                                summary_df.to_excel(writer, sheet_name='Summary', index=False)
+                            
+                            excel_buffer.seek(0)
+                            
+                            st.download_button(
+                                label="⬇️ Download Excel File",
+                                data=excel_buffer.getvalue(),
+                                file_name=f"processed_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                key="download_processed_excel"
+                            )
+                            st.success("✅ Excel export ready! (Includes data and summary sheets)")
+                        except Exception as e:
+                            st.error(f"❌ Error exporting Excel: {str(e)}")
+                            # Fallback to CSV
                             csv_buffer = BytesIO()
                             data.to_csv(csv_buffer, index=False)
                             csv_buffer.seek(0)
                             
                             st.download_button(
-                                label="⬇️ Download as CSV (Excel compatible)",
+                                label="⬇️ Download as CSV (Fallback)",
                                 data=csv_buffer.getvalue(),
                                 file_name=f"processed_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                                 mime="text/csv",
-                                key="download_processed_csv_excel"
+                                key="download_processed_csv_fallback"
                             )
-                            st.success("✅ CSV export ready! (Can be opened in Excel)")
-                        except Exception as e:
-                            st.error(f"❌ Error exporting file: {str(e)}")
                 
                 with col3:
                     if st.button("🔄 Refresh Status", key="refresh_missing_values"):
@@ -360,25 +420,54 @@ if page == "Data Upload":
                         st.error(f"❌ Error exporting CSV: {str(e)}")
             
             with col2:
-                if st.button("📋 Export as CSV (Excel Compatible)", key="export_excel_cleaned"):
+                if st.button("📋 Export as Excel", key="export_excel_cleaned"):
                     try:
                         from io import BytesIO
                         from datetime import datetime
                         
+                        # Create Excel file with proper formatting
+                        excel_buffer = BytesIO()
+                        
+                        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                            # Write cleaned data to Excel
+                            current_data.to_excel(writer, sheet_name='Cleaned_Data', index=False)
+                            
+                            # Add a summary sheet
+                            summary_df = pd.DataFrame({
+                                'Metric': ['Total Rows', 'Total Columns', 'Missing Values', 'Export Date'],
+                                'Value': [
+                                    current_data.shape[0],
+                                    current_data.shape[1], 
+                                    current_data.isnull().sum().sum(),
+                                    datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                                ]
+                            })
+                            summary_df.to_excel(writer, sheet_name='Summary', index=False)
+                        
+                        excel_buffer.seek(0)
+                        
+                        st.download_button(
+                            label="⬇️ Download Excel File",
+                            data=excel_buffer.getvalue(),
+                            file_name=f"cleaned_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            key="download_excel_cleaned"
+                        )
+                        st.success("✅ Excel export ready! (Includes cleaned data and summary)")
+                    except Exception as e:
+                        st.error(f"❌ Error exporting Excel: {str(e)}")
+                        # Fallback to CSV
                         csv_buffer = BytesIO()
                         current_data.to_csv(csv_buffer, index=False)
                         csv_buffer.seek(0)
                         
                         st.download_button(
-                            label="⬇️ Download CSV (Excel Compatible)",
+                            label="⬇️ Download as CSV (Fallback)",
                             data=csv_buffer.getvalue(),
                             file_name=f"cleaned_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                             mime="text/csv",
-                            key="download_csv_excel_cleaned"
+                            key="download_csv_fallback_cleaned"
                         )
-                        st.success("✅ CSV export ready! (Opens in Excel)")
-                    except Exception as e:
-                        st.error(f"❌ Error exporting file: {str(e)}")
             
             with col3:
                 if st.button("📊 Show Data Summary", key="show_summary_cleaned"):
@@ -399,7 +488,7 @@ if page == "Data Upload":
 
 # Data Cleaning Page
 elif page == "Data Cleaning":
-    st.header("🧹 Data Cleaning ")
+    st.header("🧹 Data Cleaning & Excel-like Operations")
     
     if st.session_state.data is None:
         st.warning("⚠️ Please upload data first in the Data Upload page.")
@@ -535,7 +624,7 @@ elif page == "Data Cleaning":
                 st.rerun()
         
         with tab2:
-            st.subheader("Add New Calculated Column ")
+            st.subheader("Add Calculated Column (Excel-like Formulas)")
             
             col1, col2 = st.columns([1, 1])
             
