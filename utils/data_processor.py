@@ -22,7 +22,22 @@ class DataProcessor:
                     df = pd.read_csv(uploaded_file, encoding='latin-1')
             
             elif file_extension in ['xlsx', 'xls']:
-                df = pd.read_excel(uploaded_file)
+                # Enhanced Excel reading with multiple sheet support
+                try:
+                    # Try to read the first sheet by default
+                    df = pd.read_excel(uploaded_file, sheet_name=0)
+                    
+                    # If there are multiple sheets, inform the user
+                    uploaded_file.seek(0)
+                    excel_file = pd.ExcelFile(uploaded_file)
+                    if len(excel_file.sheet_names) > 1:
+                        # For now, use the first sheet but could be enhanced to let user choose
+                        df = pd.read_excel(uploaded_file, sheet_name=excel_file.sheet_names[0])
+                        
+                except Exception as e:
+                    # Fallback: try without specifying sheet_name
+                    uploaded_file.seek(0)
+                    df = pd.read_excel(uploaded_file)
             
             else:
                 raise ValueError(f"Unsupported file format: {file_extension}")
@@ -52,7 +67,7 @@ class DataProcessor:
                     # Attempt to convert to numeric safely
                     numeric_series = pd.to_numeric(df[col], errors='coerce')
                     # Only convert if we didn't lose too much data
-                    non_null_count = numeric_series.count()
+                    non_null_count = numeric_series.notna().sum()
                     if non_null_count > len(df[col]) * 0.5:
                         df[col] = numeric_series
                 except:
