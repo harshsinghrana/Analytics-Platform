@@ -2,3 +2,4 @@ streamlit
 plotly
 openai
 google-genai
+openpyxl
